@@ -1,4 +1,10 @@
-# Сбер
+# Тестовые задания на вакансию Стажера Data Engineer в Сбере
+
+Задание выполнено Алексеевым Александром
+
+Язык выполнения: PostgreSQL
+
+Далее приведены условия задач и 
 
 Тестовое задание
 Примечание:
@@ -25,7 +31,9 @@ insert into test values (4, 'Марина', 23);
 insert into test values (5, 'Сергей', 34);
 ```
 
-Я предоставлю решения, использующие диалект PostgreSQL, поскольку он широко используется и поддерживается. Ниже приведены несколько способов найти 3-х самых молодых сотрудников в команде и вывести их имена в отсортированном виде.
+### Решение задачи 1
+
+Ниже приведены несколько способов найти 3-х самых молодых сотрудников в команде и вывести их имена в отсортированном виде.
 
 Создадим таблицу на PostgreSQL
 
@@ -44,7 +52,7 @@ INSERT INTO test VALUES
 (5, 'Сергей', 34);
 ```
 
-### Решение 1: Использующее **`LIMIT` и `ORDER BY`**
+### Решение 1_1: Использующее **`LIMIT` и `ORDER BY`**
 
 ```sql
 SELECT name
@@ -53,9 +61,9 @@ ORDER BY age, name
 LIMIT 3;
 ```
 
-Этот запрос сортирует сотрудников по возрасту в порядке возрастания, а затем по имени. Он использует предложение **`LIMIT`** для возврата только первых 3 строк отсортированного результирующего набора.
+Этот запрос сортирует сотрудников по возрасту в порядке возрастания, а затем по имени. Он использует **`LIMIT`** для возврата только первых 3 строк отсортированного результирующего набора.
 
-### Решение 2: Использующее **`JOIN` и `GROUP BY`**
+### Решение 1_2: Использующее **`JOIN` и `GROUP BY`**
 
 ```sql
 SELECT t1.name
@@ -66,9 +74,9 @@ HAVING COUNT(t2.id) < 3
 ORDER BY t1.age, t1.name;
 ```
 
-В этом альтернативном решении мы выполняем self JOIN на test таблице, объединяя строки, где возраст первой таблицы (t1) больше возраста второй таблицы (t2). Затем мы группируем результаты по столбцам id, name и age первой таблицы и используем HAVING для фильтрации групп с количеством строк меньше 3 из второй таблицы (t2). Это означает, что мы выбираем только 3 самых молодых сотрудников. Наконец, мы сортируем результаты по возрасту и имени.
+В этом альтернативном решении мы выполняем  `LEFT JOIN` на `test` таблице, объединяя строки, где возраст первой таблицы (`t1`) больше возраста второй таблицы (`t2`). Затем мы группируем результаты по столбцам `id`, `name` и `age` первой таблицы и используем `HAVING` для фильтрации групп с количеством строк меньше 3 из второй таблицы (`t2`). Это означает, что мы выбираем только 3 самых молодых сотрудников. Наконец, мы сортируем результаты по возрасту и имени.
 
-### Решение 3: Использующее  **`RANK()`**
+### Решение 1_3: Использующее  **`RANK()`**
 
 ```sql
 SELECT name
@@ -81,7 +89,7 @@ WHERE rank <= 3;
 
 В данном решении используется оконная функция RANK() для присвоения ранга каждому сотруднику на основе его возраста и имени. Затем набор результатов фильтруется, чтобы включить только сотрудников с рангом 3 или ниже.
 
-Все эти решения приведут к одному и тому же результату - отсортированным именам 3-х самых молодых сотрудников. Первое решение является наиболее кратким и простым для понимания. Второе решение использует подзапрос, который может быть полезен, когда вам нужно дополнительно манипулировать результирующим набором. Третье решение демонстрирует использование оконных функций, которые могут быть полезны в более сложных сценариях.
+Все эти решения приведут к одному и тому же результату - отсортированным именам 3-х самых молодых сотрудников. Первое решение является наиболее кратким и простым для понимания. Второе решение использует join и group by, которые полезны во множестве случаев. Третье решение демонстрирует использование оконных функций, которые могут быть полезны в более сложных сценариях.
 
 ### Результат всех команд
 
@@ -116,7 +124,8 @@ INSERT 0 5
 1. abonent – номер абонента;
 2. region_id – id региона в котором находится абонент;
 3. dttm – день и время звонка.
-4. Задание: нужно для каждого дня определить последнее местоположение абонента.
+
+Задание: нужно для каждого дня определить последнее местоположение абонента.
 То есть нужно вывести:
 
 | abonent  | region_id | dttm |
@@ -125,7 +134,9 @@ INSERT 0 5
 | 7072110988 | 32722  | 2021-08-19 09:00 |
 | 7071107101  | 32722  | 2021-08-19 09:27 |
 
-Вот код PostgreSQL для создания таблицы и вставки данных:
+### Решение задачи 2
+
+Код PostgreSQL для создания таблицы и вставки данных:
 
 ```sql
 CREATE TABLE calls (
@@ -146,16 +157,26 @@ INSERT INTO calls (abonent, region_id, dttm) VALUES
 Теперь я предоставлю запрос для определения последнего местоположения подписчика за каждый день:
 
 ```sql
-SELECT c1.abonent, c1.region_id, c1.dttm
-FROM calls c1
-LEFT JOIN calls c2 ON c1.abonent = c2.abonent AND DATE(c1.dttm) = DATE(c2.dttm) AND c1.dttm < c2.dttm
-WHERE c2.abonent IS NULL
-ORDER BY c1.abonent, c1.dttm;
+WITH last_location AS (
+    SELECT 
+        abonent,
+        MAX(dttm) AS dttm
+    FROM calls
+    GROUP BY abonent, DATE(dttm)
+)
+SELECT 
+    ll.abonent,
+    c.region_id,
+    ll.dttm
+FROM last_location ll
+JOIN calls c ON ll.abonent = c.abonent AND ll.dttm = c.dttm
+ORDER BY ll.abonent, ll.dttm;
 ```
 
-Этот запрос использует self `LEFT JOIN` в таблице `calls` для объединения строк с тем же **`abonent`** и той же датой (**`DATE(c1.dttm) = DATE(c2.dttm)`**), но где `dttm` первой таблицы меньше, чем `dttm` второй таблицы. Предложение `WHERE` фильтрует результирующий набор так, чтобы он включал только строки, в которых значение второй таблицы равно NULL, что означает, что более поздней записи для того же значения и даты не существует. Наконец, запрос упорядочивает результаты по `abonent` и `dttm`.
-
-Это решение эффективно определяет последнее местоположение подписчика за каждый день, используя автоматическое **`LEFT JOIN`** и фильтрацию на основе отсутствия более поздней записи.
+1. Создается общий таблицы выражений (CTE) с названием **`last_location`**, чтобы найти максимальную (последнюю) метку времени (**`dttm`**) для каждого абонента (**`abonent`**) и дня. Это делается путем группировки данных по **`abonent`** и части даты **`dttm`** (с использованием функции **`DATE()`**), а затем выбора максимального значения **`dttm`** для каждой группы.
+2. Затем основной запрос выбирает столбцы **`abonent`**, **`region_id`** и **`dttm`** из CTE **`last_location`** и исходной таблицы **`calls`**.
+3. CTE **`last_location`** объединяется с таблицей **`calls`** на основе совпадающих значений **`abonent`** и совпадающих значений **`dttm`** (т. е. последняя метка времени для каждого абонента и дня).
+4. Наконец, запрос упорядочивает результат по **`abonent`** и **`dttm`**.
 
 ### Результат всех команд
 
@@ -193,10 +214,8 @@ INSERT 0 6
 | item_name  |  varchar2(150) | Название товара |
 | item_price | number(12,2) | Цена товара |
 | created_dttm | created_dttm | Дата добавления записи |
-| valid_from_dt  | date |  Дата, с которой начала действовать данная цена (created_dttm
-записи с ценой) |
-| valid_to_dt  | date  | Дата, до которой действовала данная цена (created_dttm
-следующей записи по данному товару «минус» один день) |
+| valid_from_dt  | date |  Дата, с которой начала действовать данная цена (created_dttm записи с ценой) |
+| valid_to_dt  | date  | Дата, до которой действовала данная цена (created_dttm следующей записи по данному товару «минус» один день) |
 
 Примечание: для последней (действующей на данный момент) цены устанавливается дата 9999-12-31.
 
@@ -224,33 +243,25 @@ INSERT INTO item_prices (item_id, item_name, item_price, created_dttm) VALUES
 
 ```sql
 SELECT
-    ip1.item_id,
-    ip1.item_name,
-    ip1.item_price,
-    ip1.created_dttm,
-    ip1.created_dttm AS valid_from_dt,
-    COALESCE(ip2.created_dttm::date - INTERVAL '1 DAY', '9999-12-31') AS valid_to_dt
+    ip.item_id,
+    ip.item_name,
+    ip.item_price,
+    ip.created_dttm,
+    ip.created_dttm AS valid_from_dt,
+    COALESCE((LEAD(ip.created_dttm) OVER (PARTITION BY ip.item_id ORDER BY ip.created_dttm))::date - INTERVAL '1 DAY', '9999-12-31') AS valid_to_dt
 FROM
-    item_prices ip1
-LEFT JOIN
-    item_prices ip2 ON ip1.item_id = ip2.item_id AND ip1.created_dttm < ip2.created_dttm
-WHERE
-    ip2.created_dttm IS NULL OR ip2.created_dttm = (
-        SELECT MIN(ip3.created_dttm)
-        FROM item_prices ip3
-        WHERE ip3.item_id = ip1.item_id AND ip3.created_dttm > ip1.created_dttm
-    )
+    item_prices ip
 ORDER BY
-    ip1.item_id, ip1.created_dttm;
+    ip.item_id, ip.created_dttm;
 ```
 
-Этот запрос выполняет самостоятельное ЛЕВОЕ СОЕДИНЕНИЕ в таблице **`item_prices`** для объединения строк с тем же **`item_id`**, но где значение **`created_dttm`** первой таблицы меньше значения **`created_dttm`** второй таблицы. В предложении SELECT мы используем функцию **`COALESCE`** для отображения **`created_dttm`** следующей записи для этого продукта "минус" один день в качестве столбца **`valid_to_dt`**. Если следующей записи не существует, используется дата "9999-12-31".
+Этот SQL-запрос направлен на создание результирующего набора данных с указанным форматом для таблицы **`dict_item_prices`**. Результирующий набор данных получается из таблицы **`item_prices`** и содержит дополнительные столбцы **`valid_from_dt`** и **`valid_to_dt`**, которые указывают период действия цены для каждого товара. Вот объяснение кода:
 
-Предложение WHERE фильтрует результирующий набор, чтобы включать только строки, в которых значение **`created_dttm`** второй таблицы равно нулю (более поздняя запись не существует) или минимальное значение **`created_dttm`** больше, чем значение **`created_dttm`** первой таблицы для того же **`item_id`**.
-
-Наконец, запрос упорядочивает результаты по **`item_id`** и **`created_dttm`**.
-
-Это решение обеспечивает требуемый вывод, включая столбцы valid_from_dt и valid_to_dt, с помощью самостоятельного LEFT JOIN и фильтрации на основе минимального created_dttm следующей записи.
+1. Запрос выбирает необходимые столбцы из таблицы **`item_prices`** (**`item_id`**, **`item_name`**, **`item_price`** и **`created_dttm`**).
+2. Столбец **`valid_from_dt`** устанавливается равным столбцу **`created_dttm`**. Это означает, что цена действительна с даты добавления записи.
+3. Столбец **`valid_to_dt`** рассчитывается с помощью оконной функции **`LEAD`**. Функция **`LEAD`** извлекает значение **`created_dttm`** из следующей строки в той же группе **`item_id`**, когда строки упорядочены по **`created_dttm`**. Это позволяет найти дату следующего изменения цены для каждого товара. Затем от следующей даты изменения цены вычитается один день, чтобы получить последний день, когда текущая цена действительна. Если нет даты следующего изменения цены (т.е. это последняя запись для товара), функция **`COALESCE`** устанавливает значение **`valid_to_dt`** равным '9999-12-31', указывая, что это текущая действительная цена.
+4. `COALESCE` **`PARTITION BY`** в функции **`LEAD`** гарантирует, что функция работает отдельно для каждого **`item_id`**, обрабатывая изменения цен для каждого товара независимо.
+5. Наконец, запрос упорядочивает результирующий набор данных по **`item_id`** и **`created_dttm`**.
 
 ### Результат всех команд
 
@@ -323,7 +334,7 @@ INSERT INTO transaction_details (transaction_id, customer_id, item_id, item_numb
     (12, 400, 2, 1, '2023-03-26 13:00:00');
 ```
 
-А также таблицу **`item_prices`**
+А также таблицу **`item_prices`:**
 
 ```sql
 CREATE TABLE item_prices (
@@ -342,47 +353,71 @@ INSERT INTO item_prices (item_id, item_name, item_price, valid_from_dt, valid_to
     (2, 'Product B', 18.00, '2022-03-01', '9999-12-31');
 ```
 
-Теперь давайте создадим запрос, который выведет таблицу **`customer_aggr`**, как описано:
+Теперь давайте создадим запрос, который выведет таблицу **`customer_aggr`**:
 
 ```sql
+WITH last_month_transactions AS (
+    SELECT
+        td.customer_id,
+        td.item_id,
+        td.item_number,
+        td.transaction_dttm
+    FROM
+        transaction_details td
+    WHERE
+        td.transaction_dttm > CURRENT_DATE - INTERVAL '30 DAY'
+),
+transaction_prices AS (
+    SELECT
+        lmt.customer_id,
+        lmt.item_id,
+        lmt.item_number,
+        lmt.transaction_dttm,
+        ip.item_name,
+        ip.item_price
+    FROM
+        last_month_transactions lmt
+    JOIN
+        item_prices ip ON lmt.item_id = ip.item_id AND lmt.transaction_dttm BETWEEN ip.valid_from_dt AND ip.valid_to_dt
+),
+total_spent AS (
+    SELECT
+        customer_id,
+        item_name,
+        SUM(item_number * item_price) AS amount_spent
+    FROM
+        transaction_prices
+    GROUP BY
+        customer_id, item_name
+),
+max_spent AS (
+    SELECT
+        customer_id,
+        MAX(amount_spent) AS max_amount_spent
+    FROM
+        total_spent
+    GROUP BY
+        customer_id
+)
 SELECT
-    td.customer_id,
-    SUM(td.item_number * ip.item_price) AS amount_spent_1m,
-    ip.item_name AS top_item_1m
+    tp.customer_id,
+    tp.amount_spent AS amount_spent_1m,
+    tp.item_name AS top_item_1m
 FROM
-    transaction_details td
+    total_spent tp
 JOIN
-    item_prices ip ON td.item_id = ip.item_id
-WHERE
-    td.transaction_dttm > CURRENT_DATE - INTERVAL '30 DAY'
-    AND ip.valid_from_dt <= td.transaction_dttm
-    AND ip.valid_to_dt >= td.transaction_dttm
-GROUP BY
-    td.customer_id, ip.item_name
-HAVING
-    SUM(td.item_number * ip.item_price) = (
-        SELECT MAX(sub.item_number * sub_ip.item_price)
-        FROM transaction_details sub
-        JOIN item_prices sub_ip ON sub.item_id = sub_ip.item_id
-        WHERE sub.customer_id = td.customer_id
-            AND sub.transaction_dttm > CURRENT_DATE - INTERVAL '30 DAY'
-            AND sub_ip.valid_from_dt <= sub.transaction_dttm
-            AND sub_ip.valid_to_dt >= sub.transaction_dttm
-    )
-    AND td.customer_id IN (
-        SELECT DISTINCT customer_id
-        FROM transaction_details
-        WHERE transaction_dttm > CURRENT_DATE - INTERVAL '30 DAY'
-    )
+    max_spent ms ON tp.customer_id = ms.customer_id AND tp.amount_spent = ms.max_amount_spent
 ORDER BY
-    td.customer_id;
+    tp.customer_id;
 ```
 
-Этот запрос сначала фильтрует транзакции, совершенные за последние 30 дней, используя предложение `WHERE`. Затем он объединяет таблицу `transaction_details` с таблицей `item_prices` на основе `item_id` и `transaction_dttm`, находящихся в диапазоне `valid_from_dt` и `valid_to_dt`.
+Запрос состоит из нескольких общих выражений (CTE), которые разбивают проблему на более мелкие части. Вот объяснение каждой части:
 
-Запрос группирует результаты по `customer_id` и `item_name`, вычисляя сумму, потраченную на каждый товар, путем умножения `item_number` на `item_price`. Условие `HAVING` гарантирует возврат только максимальной суммы, потраченной клиентом на один товар.
-
-Это решение учитывает текущую цену на момент транзакции с использованием каталога `dict_item_prices` из задачи 3 и фильтрует клиентов, которые не совершали покупок в течение последнего месяца.
+1. **`last_month_transactions`**: Это CTE фильтрует таблицу **`transaction_details`**, чтобы включить только транзакции, которые произошли в последние 30 дней.
+2. **`transaction_prices`**: Это CTE объединяет CTE **`last_month_transactions`** с таблицей **`item_prices`**, чтобы получить названия товаров и их цены для каждой транзакции, учитывая период действия цены.
+3. **`total_spent`**: Это CTE рассчитывает общую сумму, потраченную каждым клиентом на каждый товар в течение последнего месяца, суммируя произведение **`item_number`** и **`item_price`**.
+4. **`max_spent`**: Это CTE определяет максимальную сумму, потраченную каждым клиентом на любой товар за последний месяц.
+5. Финальный SELECT-запрос объединяет CTE **`total_spent`** и **`max_spent`**, чтобы получить список наиболее дорогих товаров (названия товаров), на которые каждый клиент потратил больше всего в течение последнего месяца, а также общую сумму, потраченную на этот товар. Результаты упорядочены по **`customer_id`**.
 
 ### Результат всех команд
 
@@ -393,8 +428,8 @@ CREATE TABLE
 INSERT 0 5
  customer_id | amount_spent_1m | top_item_1m 
 -------------+-----------------+-------------
-         300 |           54.00 | Product B
-         400 |           36.00 | Product A
+         300 |           72.00 | Product A
+         400 |           54.00 | Product B
 (2 rows)
 ```
 
@@ -442,12 +477,52 @@ CREATE TABLE social_posts (
 );
 
 INSERT INTO social_posts (id, created_at, header) VALUES
-    (1, '2022-01-17 08:50:58', 'Sberbank is the best bank'),
-    (2, '2022-01-17 18:36:41', 'Visa vs. Mastercard'),
-    (3, '2022-01-17 16:16:17', 'Visa vs. UnionPay'),
-    (4, '2022-01-17 18:01:00', 'Mastercard vs. UnionPay'),
-    (5, '2022-01-16 16:44:36', 'Hadoop or Greenplum: Pros and cons'),
-    (6, '2022-01-16 14:57:32', 'NFC: Wireless payment');
+		-- February
+    (1, '2022-02-01 08:50:58', 'Post 1'),
+    (2, '2022-02-02 18:36:41', 'Post 2'),
+    (3, '2022-02-10 16:16:17', 'Post 3'),
+    (4, '2022-02-15 18:01:00', 'Post 4'),
+    (5, '2022-02-28 16:44:36', 'Post 5'),
+
+		-- March
+    (6, '2022-03-01 14:57:32', 'Post 6'),
+    (7, '2022-03-02 09:30:20', 'Post 7'),
+    (8, '2022-03-05 11:55:12', 'Post 8'),
+    (9, '2022-03-08 13:05:43', 'Post 9'),
+    (10, '2022-03-10 15:25:31', 'Post 10'),
+    (11, '2022-03-12 17:40:55', 'Post 11'),
+    (12, '2022-03-15 10:07:29', 'Post 12'),
+    (13, '2022-03-18 12:33:46', 'Post 13'),
+    (14, '2022-03-22 14:12:59', 'Post 14'),
+    (15, '2022-03-25 16:23:17', 'Post 15'),
+    (16, '2022-03-28 18:45:34', 'Post 16'),
+    (17, '2022-03-30 09:15:41', 'Post 17'),
+    (18, '2022-03-31 11:24:53', 'Post 18'),
+
+		-- April
+    (19, '2022-04-01 12:35:16', 'Post 19'),
+    (20, '2022-04-04 14:46:58', 'Post 20'),
+    (21, '2022-04-06 10:20:42', 'Post 21'),
+    (22, '2022-04-09 12:55:30', 'Post 22'),
+    (23, '2022-04-12 14:07:15', 'Post 23'),
+    (24, '2022-04-15 15:22:49', 'Post 24'),
+    (25, '2022-04-18 10:33:24', 'Post 25'),
+    (26, '2022-04-20 12:45:38', 'Post 26'),
+    (27, '2022-04-25 14:55:38', 'Post 27'),
+
+		-- May
+    (28, '2022-05-01 09:32:01', 'Post 28'),
+    (29, '2022-05-06 10:20:42', 'Post 29'),
+    (30, '2022-05-09 12:55:30', 'Post 30'),
+    (31, '2022-05-12 14:07:15', 'Post 31'),
+    (32, '2022-05-25 11:42:52', 'Post 32'),
+
+    -- June
+    (33, '2022-06-01 08:55:37', 'Post 33'),
+    (34, '2022-06-01 09:32:01', 'Post 34'),
+    (35, '2022-06-06 10:20:42', 'Post 35'),
+    (36, '2022-06-09 12:55:30', 'Post 36'),
+    (37, '2022-06-28 16:30:18', 'Post 37');
 ```
 
 Теперь давайте создадим запрос, который выдаст желаемый результат:
@@ -456,7 +531,7 @@ INSERT INTO social_posts (id, created_at, header) VALUES
 WITH monthly_counts AS (
     SELECT
         DATE_TRUNC('month', created_at) AS dt,
-        COUNT(*) AS quantity
+        COUNT(*) AS count
     FROM
         social_posts
     GROUP BY
@@ -465,14 +540,14 @@ WITH monthly_counts AS (
 percentage_growth AS (
     SELECT
         mc.dt,
-        mc.quantity,
-        ROUND(100 * (mc.quantity - LAG(mc.quantity) OVER (ORDER BY mc.dt)) / LAG(mc.quantity) OVER (ORDER BY mc.dt),1) AS prcnt_growth
+        mc.count,
+        ROUND(100 * (mc.count - LAG(mc.count) OVER (ORDER BY mc.dt)) / LAG(mc.count) OVER (ORDER BY mc.dt),1) AS prcnt_growth
     FROM
         monthly_counts mc
 )
 SELECT
     dt,
-    quantity,
+    count,
     COALESCE(CAST(prcnt_growth AS VARCHAR) || '%', 'zero') AS prcnt_growth
 FROM
     percentage_growth
@@ -488,9 +563,13 @@ ORDER BY
 
 ```
 CREATE TABLE
-INSERT 0 6
-         dt          | quantity | prcnt_growth 
----------------------+----------+--------------
- 2022-01-01 00:00:00 |        6 | zero
-(1 row)
+INSERT 0 37
+         dt | count | prcnt_growth 
+------------+-------+--------------
+ 2022-02-01 |     5 | zero
+ 2022-03-01 |    13 | 160.0%
+ 2022-04-01 |     9 | -30.0%
+ 2022-05-01 |     5 | -44.0%
+ 2022-06-01 |     5 | 0.0%
+(5 rows)
 ```
