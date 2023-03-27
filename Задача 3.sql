@@ -13,21 +13,13 @@ INSERT INTO item_prices (item_id, item_name, item_price, created_dttm) VALUES
     (2, 'Product B', 18.00, '2022-03-01');
     
 SELECT
-    ip1.item_id,
-    ip1.item_name,
-    ip1.item_price,
-    ip1.created_dttm,
-    ip1.created_dttm AS valid_from_dt,
-    COALESCE(ip2.created_dttm::date - INTERVAL '1 DAY', '9999-12-31') AS valid_to_dt
+    ip.item_id,
+    ip.item_name,
+    ip.item_price,
+    ip.created_dttm,
+    ip.created_dttm AS valid_from_dt,
+    COALESCE((LEAD(ip.created_dttm) OVER (PARTITION BY ip.item_id ORDER BY ip.created_dttm))::date - INTERVAL '1 DAY', '9999-12-31') AS valid_to_dt
 FROM
-    item_prices ip1
-LEFT JOIN
-    item_prices ip2 ON ip1.item_id = ip2.item_id AND ip1.created_dttm < ip2.created_dttm
-WHERE
-    ip2.created_dttm IS NULL OR ip2.created_dttm = (
-        SELECT MIN(ip3.created_dttm)
-        FROM item_prices ip3
-        WHERE ip3.item_id = ip1.item_id AND ip3.created_dttm > ip1.created_dttm
-    )
+    item_prices ip
 ORDER BY
-    ip1.item_id, ip1.created_dttm;
+    ip.item_id, ip.created_dttm;
