@@ -1,4 +1,3 @@
-# Test-tasks-for-the-job-of-a-Data-Engineer-Intern-in-the-Savings-Bank
 # Сбер
 
 Тестовое задание
@@ -194,10 +193,8 @@ INSERT 0 6
 | item_name  |  varchar2(150) | Название товара |
 | item_price | number(12,2) | Цена товара |
 | created_dttm | created_dttm | Дата добавления записи |
-| valid_from_dt  | date |  Дата, с которой начала действовать данная цена (created_dttm
-записи с ценой) |
-| valid_to_dt  | date  | Дата, до которой действовала данная цена (created_dttm
-следующей записи по данному товару «минус» один день) |
+| valid_from_dt  | date |  Дата, с которой начала действовать данная цена (created_dttm записи с ценой) |
+| valid_to_dt  | date  | Дата, до которой действовала данная цена (created_dttm следующей записи по данному товару «минус» один день) |
 
 Примечание: для последней (действующей на данный момент) цены устанавливается дата 9999-12-31.
 
@@ -443,12 +440,52 @@ CREATE TABLE social_posts (
 );
 
 INSERT INTO social_posts (id, created_at, header) VALUES
-    (1, '2022-01-17 08:50:58', 'Sberbank is the best bank'),
-    (2, '2022-01-17 18:36:41', 'Visa vs. Mastercard'),
-    (3, '2022-01-17 16:16:17', 'Visa vs. UnionPay'),
-    (4, '2022-01-17 18:01:00', 'Mastercard vs. UnionPay'),
-    (5, '2022-01-16 16:44:36', 'Hadoop or Greenplum: Pros and cons'),
-    (6, '2022-01-16 14:57:32', 'NFC: Wireless payment');
+		-- February
+    (1, '2022-02-01 08:50:58', 'Post 1'),
+    (2, '2022-02-02 18:36:41', 'Post 2'),
+    (3, '2022-02-10 16:16:17', 'Post 3'),
+    (4, '2022-02-15 18:01:00', 'Post 4'),
+    (5, '2022-02-28 16:44:36', 'Post 5'),
+
+		-- March
+    (6, '2022-03-01 14:57:32', 'Post 6'),
+    (7, '2022-03-02 09:30:20', 'Post 7'),
+    (8, '2022-03-05 11:55:12', 'Post 8'),
+    (9, '2022-03-08 13:05:43', 'Post 9'),
+    (10, '2022-03-10 15:25:31', 'Post 10'),
+    (11, '2022-03-12 17:40:55', 'Post 11'),
+    (12, '2022-03-15 10:07:29', 'Post 12'),
+    (13, '2022-03-18 12:33:46', 'Post 13'),
+    (14, '2022-03-22 14:12:59', 'Post 14'),
+    (15, '2022-03-25 16:23:17', 'Post 15'),
+    (16, '2022-03-28 18:45:34', 'Post 16'),
+    (17, '2022-03-30 09:15:41', 'Post 17'),
+    (18, '2022-03-31 11:24:53', 'Post 18'),
+
+		-- April
+    (19, '2022-04-01 12:35:16', 'Post 19'),
+    (20, '2022-04-04 14:46:58', 'Post 20'),
+    (21, '2022-04-06 10:20:42', 'Post 21'),
+    (22, '2022-04-09 12:55:30', 'Post 22'),
+    (23, '2022-04-12 14:07:15', 'Post 23'),
+    (24, '2022-04-15 15:22:49', 'Post 24'),
+    (25, '2022-04-18 10:33:24', 'Post 25'),
+    (26, '2022-04-20 12:45:38', 'Post 26'),
+    (27, '2022-04-25 14:55:38', 'Post 27'),
+
+		-- May
+    (28, '2022-05-01 09:32:01', 'Post 28'),
+    (29, '2022-05-06 10:20:42', 'Post 29'),
+    (30, '2022-05-09 12:55:30', 'Post 30'),
+    (31, '2022-05-12 14:07:15', 'Post 31'),
+    (32, '2022-05-25 11:42:52', 'Post 32'),
+
+    -- June
+    (33, '2022-06-01 08:55:37', 'Post 33'),
+    (34, '2022-06-01 09:32:01', 'Post 34'),
+    (35, '2022-06-06 10:20:42', 'Post 35'),
+    (36, '2022-06-09 12:55:30', 'Post 36'),
+    (37, '2022-06-28 16:30:18', 'Post 37');
 ```
 
 Теперь давайте создадим запрос, который выдаст желаемый результат:
@@ -457,7 +494,7 @@ INSERT INTO social_posts (id, created_at, header) VALUES
 WITH monthly_counts AS (
     SELECT
         DATE_TRUNC('month', created_at) AS dt,
-        COUNT(*) AS quantity
+        COUNT(*) AS count
     FROM
         social_posts
     GROUP BY
@@ -466,14 +503,14 @@ WITH monthly_counts AS (
 percentage_growth AS (
     SELECT
         mc.dt,
-        mc.quantity,
-        ROUND(100 * (mc.quantity - LAG(mc.quantity) OVER (ORDER BY mc.dt)) / LAG(mc.quantity) OVER (ORDER BY mc.dt),1) AS prcnt_growth
+        mc.count,
+        ROUND(100 * (mc.count - LAG(mc.count) OVER (ORDER BY mc.dt)) / LAG(mc.count) OVER (ORDER BY mc.dt),1) AS prcnt_growth
     FROM
         monthly_counts mc
 )
 SELECT
     dt,
-    quantity,
+    count,
     COALESCE(CAST(prcnt_growth AS VARCHAR) || '%', 'zero') AS prcnt_growth
 FROM
     percentage_growth
@@ -489,9 +526,13 @@ ORDER BY
 
 ```
 CREATE TABLE
-INSERT 0 6
-         dt          | quantity | prcnt_growth 
----------------------+----------+--------------
- 2022-01-01 00:00:00 |        6 | zero
-(1 row)
+INSERT 0 37
+         dt | count | prcnt_growth 
+------------+-------+--------------
+ 2022-02-01 |     5 | zero
+ 2022-03-01 |    13 | 160.0%
+ 2022-04-01 |     9 | -30.0%
+ 2022-05-01 |     5 | -44.0%
+ 2022-06-01 |     5 | 0.0%
+(5 rows)
 ```
