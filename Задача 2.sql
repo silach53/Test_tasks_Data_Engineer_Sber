@@ -12,8 +12,17 @@ INSERT INTO calls (abonent, region_id, dttm) VALUES
 (7071107101, 12533, '2021-08-19 09:15'),
 (7071107101, 32722, '2021-08-19 09:27');
 
-SELECT c1.abonent, c1.region_id, c1.dttm
-FROM calls c1
-LEFT JOIN calls c2 ON c1.abonent = c2.abonent AND DATE(c1.dttm) = DATE(c2.dttm) AND c1.dttm < c2.dttm
-WHERE c2.abonent IS NULL
-ORDER BY c1.abonent, c1.dttm;
+WITH last_location AS (
+    SELECT 
+        abonent,
+        MAX(dttm) AS dttm
+    FROM calls
+    GROUP BY abonent, DATE(dttm)
+)
+SELECT 
+    ll.abonent,
+    c.region_id,
+    ll.dttm
+FROM last_location ll
+JOIN calls c ON ll.abonent = c.abonent AND ll.dttm = c.dttm
+ORDER BY ll.abonent, ll.dttm;
