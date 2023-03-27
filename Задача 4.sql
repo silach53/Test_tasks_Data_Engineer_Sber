@@ -35,34 +35,56 @@ INSERT INTO item_prices (item_id, item_name, item_price, valid_from_dt, valid_to
     (2, 'Product B', 16.00, '2022-02-15', '2022-03-01'),
     (2, 'Product B', 18.00, '2022-03-01', '9999-12-31');
     
+WITH last_month_transactions AS (
+    SELECT
+        td.customer_id,
+        td.item_id,
+        td.item_number,
+        td.transaction_dttm
+    FROM
+        transaction_details td
+    WHERE
+        td.transaction_dttm > CURRENT_DATE - INTERVAL '30 DAY'
+),
+transaction_prices AS (
+    SELECT
+        lmt.customer_id,
+        lmt.item_id,
+        lmt.item_number,
+        lmt.transaction_dttm,
+        ip.item_name,
+        ip.item_price
+    FROM
+        last_month_transactions lmt
+    JOIN
+        item_prices ip ON lmt.item_id = ip.item_id AND lmt.transaction_dttm BETWEEN ip.valid_from_dt AND ip.valid_to_dt
+),
+total_spent AS (
+    SELECT
+        customer_id,
+        item_name,
+        SUM(item_number * item_price) AS amount_spent
+    FROM
+        transaction_prices
+    GROUP BY
+        customer_id, item_name
+),
+max_spent AS (
+    SELECT
+        customer_id,
+        MAX(amount_spent) AS max_amount_spent
+    FROM
+        total_spent
+    GROUP BY
+        customer_id
+)
 SELECT
-    td.customer_id,
-    SUM(td.item_number * ip.item_price) AS amount_spent_1m,
-    ip.item_name AS top_item_1m
+    tp.customer_id,
+    tp.amount_spent AS amount_spent_1m,
+    tp.item_name AS top_item_1m
 FROM
-    transaction_details td
+    total_spent tp
 JOIN
-    item_prices ip ON td.item_id = ip.item_id
-WHERE
-    td.transaction_dttm > CURRENT_DATE - INTERVAL '30 DAY'
-    AND ip.valid_from_dt <= td.transaction_dttm
-    AND ip.valid_to_dt >= td.transaction_dttm
-GROUP BY
-    td.customer_id, ip.item_name
-HAVING
-    SUM(td.item_number * ip.item_price) = (
-        SELECT MAX(sub.item_number * sub_ip.item_price)
-        FROM transaction_details sub
-        JOIN item_prices sub_ip ON sub.item_id = sub_ip.item_id
-        WHERE sub.customer_id = td.customer_id
-            AND sub.transaction_dttm > CURRENT_DATE - INTERVAL '30 DAY'
-            AND sub_ip.valid_from_dt <= sub.transaction_dttm
-            AND sub_ip.valid_to_dt >= sub.transaction_dttm
-    )
-    AND td.customer_id IN (
-        SELECT DISTINCT customer_id
-        FROM transaction_details
-        WHERE transaction_dttm > CURRENT_DATE - INTERVAL '30 DAY'
-    )
+    max_spent ms ON tp.customer_id = ms.customer_id AND tp.amount_spent = ms.max_amount_spent
 ORDER BY
-    td.customer_id;
+    tp.customer_id;
